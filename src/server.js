@@ -1,5 +1,6 @@
 const { publicDecrypt } = require("crypto");
 const express = require("express");
+const Joi = require("joi");
 
 const fs = require("fs"); // file system
 const path = require("path");
@@ -47,9 +48,9 @@ app.delete("/api/products/:id", (req, res) => {
     return product.id === id;
   });
 
-  products.splice(productIndex, productIndex + 1);
+  products.splice(productIndex, 1);
 
-  res.status(200).send(products);
+  res.status(200).send(product);
 });
 
 app.put("/api/products/:id", (req, res) => {
@@ -68,17 +69,29 @@ app.put("/api/products/:id", (req, res) => {
     return product.id === id;
   });
 
-  const prop = Object.keys(propToModify);
-
-  prop.forEach((el) => {
-    if (products[productIndex].hasOwnProperty(el) === false) {
-      return res.status(404).send(`The property "${el}" doesn't exist`);
-    }
-
-    products[productIndex][el] = propToModify[el];
+  const schema = Joi.object({
+    title: Joi.string(),
+    price: Joi.number(),
+    description: Joi.string(),
+    category: Joi.string(),
+    image: Joi.string(),
+    rating: Joi.object({
+      rate: Joi.number(),
+      count: Joi.number(),
+    }),
   });
 
-  res.status(200).send(products);
+  const { error } = schema.validate(propToModify);
+
+  if (error) {
+    return res.status(400).send("Invalid request data");
+  }
+
+  for (property in propToModify) {
+    products[productIndex][property] = propToModify[property];
+  }
+
+  res.status(200).send(product);
 });
 
 app.listen(process.env.PORT || 3000, () =>
