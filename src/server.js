@@ -33,19 +33,24 @@ app.post("/api/products", (req, res) => {
 });
 
 app.delete("/api/products/:id", (req, res) => {
-  const id = req.params.id;
+  const id = parseInt(req.params.id);
 
-  const newProducts = products.filter((product) => product.id !== parseInt(id));
+  const product = products.find((product) => {
+    return product.id === id;
+  });
 
-  if (newProducts.length === products.length) {
-    res.status(404).send("product not found");
-  } else {
-    products = [...newProducts];
-    res.status(200).send(products);
+  if (!product) {
+    return res.status(404).send("The id is not found");
   }
+
+  const newProducts = products.filter((product) => product.id !== id);
+  products = [...newProducts];
+  return res.status(200).send(products);
 });
 
-app.put("/api/products", (req, res) => {});
+app.put("/api/products/:id", (req, res) => {
+  const id = req.params.id;
+});
 
 app.listen(process.env.PORT || 3000, () =>
   console.log("Listenning on port 3000...")
