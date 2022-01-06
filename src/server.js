@@ -40,16 +40,45 @@ app.delete("/api/products/:id", (req, res) => {
   });
 
   if (!product) {
-    return res.status(404).send("The id is not found");
+    return res.status(404).send(`This id "${id}" was not found`);
   }
 
-  const newProducts = products.filter((product) => product.id !== id);
-  products = [...newProducts];
-  return res.status(200).send(products);
+  const productIndex = products.findIndex((product) => {
+    return product.id === id;
+  });
+
+  products.splice(productIndex, productIndex + 1);
+
+  res.status(200).send(products);
 });
 
 app.put("/api/products/:id", (req, res) => {
-  const id = req.params.id;
+  const id = parseInt(req.params.id);
+  const propToModify = req.body;
+
+  const product = products.find((product) => {
+    return product.id === id;
+  });
+
+  if (!product) {
+    return res.status(404).send(`This id "${id}" was not found`);
+  }
+
+  const productIndex = products.findIndex((product) => {
+    return product.id === id;
+  });
+
+  const prop = Object.keys(propToModify);
+
+  prop.forEach((el) => {
+    if (products[productIndex].hasOwnProperty(el) === false) {
+      return res.status(404).send(`The property "${el}" doesn't exist`);
+    }
+
+    products[productIndex][el] = propToModify[el];
+  });
+
+  res.status(200).send(products);
 });
 
 app.listen(process.env.PORT || 3000, () =>
