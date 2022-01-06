@@ -1,3 +1,4 @@
+const { publicDecrypt } = require("crypto");
 const express = require("express");
 
 const fs = require("fs"); // file system
@@ -5,7 +6,7 @@ const path = require("path");
 
 const pathProductsJSON = path.join(__dirname, "./data/products.json");
 
-const products = JSON.parse(fs.readFileSync(pathProductsJSON).toString()); // string json --> objet js
+let products = JSON.parse(fs.readFileSync(pathProductsJSON).toString()); // string json --> objet js
 
 const app = express();
 
@@ -17,11 +18,11 @@ app.get("", (req, res) => {
   res.send("Homepage");
 });
 
-app.get("/products", (req, res) => {
+app.get("/api/products", (req, res) => {
   res.status(200).send(products);
 });
 
-app.post("/products", (req, res) => {
+app.post("/api/products", (req, res) => {
   const product = req.body;
 
   product.id = products[products.length - 1].id + 1;
@@ -31,15 +32,20 @@ app.post("/products", (req, res) => {
   res.status(201).send(products);
 });
 
-app.delete("/products", (req, res) => {
-  const productToDelete = req.body;
+app.delete("/api/products/:id", (req, res) => {
+  const id = req.params.id;
 
-  const newProducts = products.filter(
-    (product) => product.id !== productToDelete.id
-  );
+  const newProducts = products.filter((product) => product.id !== parseInt(id));
 
-  res.status(200).send(newProducts);
+  if (newProducts.length === products.length) {
+    res.status(404).send("product not found");
+  } else {
+    products = [...newProducts];
+    res.status(200).send(products);
+  }
 });
+
+app.put("/api/products", (req, res) => {});
 
 app.listen(process.env.PORT || 3000, () =>
   console.log("Listenning on port 3000...")
