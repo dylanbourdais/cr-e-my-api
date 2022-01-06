@@ -87,7 +87,7 @@ app.put("/api/products/:id", (req, res) => {
     return res.status(400).send("Invalid request data");
   }
 
-  for (property in propToModify) {
+  for (let property in propToModify) {
     products[productIndex][property] = propToModify[property];
   }
 
