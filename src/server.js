@@ -95,12 +95,16 @@ app.put("/api/products/:id", (req, res) => {
   });
 
   // On vérifie la requête
-  const { error } = schema.validate(propToModify);
+  const { error } = schema.validate(propToModify, { abortEarly: false });
 
   // si le schema de la requête reçue ne correspond pas à celle attendu
   if (error) {
-    console.log(error);
-    return res.status(400).send(error.details[0].message);
+    let err = [];
+    error.details.forEach((el) => {
+      err.push(el.message);
+    });
+
+    return res.status(400).send(err.toString());
   }
 
   // sinon on modifie le produit
