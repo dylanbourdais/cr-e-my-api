@@ -13,6 +13,34 @@ const app = express();
 
 app.use(express.json());
 
+const verifyBody = (request) => {
+  // on crée le schema du body de la requête attendu
+  const schema = Joi.object({
+    title: Joi.string(),
+    price: Joi.number(),
+    description: Joi.string(),
+    category: Joi.string(),
+    image: Joi.string(),
+    rating: Joi.object({
+      rate: Joi.number(),
+      count: Joi.number(),
+    }),
+  });
+
+  // On vérifie la requête
+  const { error } = schema.validate(request, { abortEarly: false });
+  console.log(error);
+  // si le schema de la requête reçue ne correspond pas à celle attendu
+  if (error) {
+    let err = [];
+    error.details.forEach((el) => {
+      err.push(el.message);
+    });
+
+    return err.toString();
+  }
+};
+
 app.get("", (req, res) => {
   // res==>response
   console.log("requête entrante sur la homepage");
@@ -41,11 +69,17 @@ app.get("/api/products/:id", (req, res) => {
 app.post("/api/products", (req, res) => {
   const product = req.body;
 
+  // on vérifie si le body de la requête est correct
+  const err = verifyBody(product);
+  if (err) {
+    return res.status(400).send(err.toString());
+  }
+
   product.id = products[products.length - 1].id + 1;
 
   products.push(product);
 
-  res.status(201).send(products);
+  res.status(201).send(product);
 });
 
 app.delete("/api/products/:id", (req, res) => {
@@ -81,29 +115,8 @@ app.put("/api/products/:id", (req, res) => {
     return res.status(404).send(`This id "${id}" was not found`);
   }
 
-  // on crée le schema du body de la requête attendu
-  const schema = Joi.object({
-    title: Joi.string(),
-    price: Joi.number(),
-    description: Joi.string(),
-    category: Joi.string(),
-    image: Joi.string(),
-    rating: Joi.object({
-      rate: Joi.number(),
-      count: Joi.number(),
-    }),
-  });
-
-  // On vérifie la requête
-  const { error } = schema.validate(propToModify, { abortEarly: false });
-
-  // si le schema de la requête reçue ne correspond pas à celle attendu
-  if (error) {
-    let err = [];
-    error.details.forEach((el) => {
-      err.push(el.message);
-    });
-
+  const err = verifyBody(propToModify);
+  if (err) {
     return res.status(400).send(err.toString());
   }
 
