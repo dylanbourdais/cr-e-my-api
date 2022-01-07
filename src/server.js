@@ -7,7 +7,7 @@ const path = require("path");
 
 const pathProductsJSON = path.join(__dirname, "./data/products.json");
 
-let products = JSON.parse(fs.readFileSync(pathProductsJSON).toString()); // string json --> objet js
+const products = JSON.parse(fs.readFileSync(pathProductsJSON).toString()); // string json --> objet js
 
 const app = express();
 
@@ -34,8 +34,9 @@ app.post("/api/products", (req, res) => {
 });
 
 app.delete("/api/products/:id", (req, res) => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(req.params.id); // on récupère l'id situé dans l'url
 
+  // on vérifie si l'id correspond à un produit
   const product = products.find((product) => {
     return product.id === id;
   });
@@ -44,6 +45,7 @@ app.delete("/api/products/:id", (req, res) => {
     return res.status(404).send(`This id "${id}" was not found`);
   }
 
+  // on supprime le produit selon son id
   const productIndex = products.findIndex((product) => {
     return product.id === id;
   });
@@ -65,10 +67,7 @@ app.put("/api/products/:id", (req, res) => {
     return res.status(404).send(`This id "${id}" was not found`);
   }
 
-  const productIndex = products.findIndex((product) => {
-    return product.id === id;
-  });
-
+  // on crée le schema du body de la requête attendu
   const schema = Joi.object({
     title: Joi.string(),
     price: Joi.number(),
@@ -81,14 +80,32 @@ app.put("/api/products/:id", (req, res) => {
     }),
   });
 
+  // On vérifie la requête
   const { error } = schema.validate(propToModify);
 
+  // si le schema de la requête reçue ne correspond pas à celle attendu
   if (error) {
-    return res.status(400).send("Invalid request data");
+    console.log(error);
+    return res.status(400).send(error.details[0].message);
   }
 
+  // sinon on modifie le produit
   for (let property in propToModify) {
-    products[productIndex][property] = propToModify[property];
+    product[property] = propToModify[property];
+  }
+
+  res.status(200).send(product);
+});
+
+app.get("/api/products/:id", (req, res) => {
+  const id = parseInt(req.params.id);
+
+  const product = products.find((product) => {
+    return product.id === id;
+  });
+
+  if (!product) {
+    return res.status(404).send(`This id "${id}" was not found`);
   }
 
   res.status(200).send(product);
