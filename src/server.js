@@ -23,6 +23,21 @@ app.get("/api/products", (req, res) => {
   res.status(200).send(products);
 });
 
+app.get("/api/products/:id", (req, res) => {
+  const id = parseInt(req.params.id); // on récupère l'id situé dans l'url
+
+  // on vérifie si l'id correspond à un produit
+  const product = products.find((product) => {
+    return product.id === id;
+  });
+
+  if (!product) {
+    return res.status(404).send(`This id "${id}" was not found`);
+  }
+
+  res.status(200).send(product);
+});
+
 app.post("/api/products", (req, res) => {
   const product = req.body;
 
@@ -34,9 +49,8 @@ app.post("/api/products", (req, res) => {
 });
 
 app.delete("/api/products/:id", (req, res) => {
-  const id = parseInt(req.params.id); // on récupère l'id situé dans l'url
+  const id = parseInt(req.params.id);
 
-  // on vérifie si l'id correspond à un produit
   const product = products.find((product) => {
     return product.id === id;
   });
@@ -92,20 +106,6 @@ app.put("/api/products/:id", (req, res) => {
   // sinon on modifie le produit
   for (let property in propToModify) {
     product[property] = propToModify[property];
-  }
-
-  res.status(200).send(product);
-});
-
-app.get("/api/products/:id", (req, res) => {
-  const id = parseInt(req.params.id);
-
-  const product = products.find((product) => {
-    return product.id === id;
-  });
-
-  if (!product) {
-    return res.status(404).send(`This id "${id}" was not found`);
   }
 
   res.status(200).send(product);
