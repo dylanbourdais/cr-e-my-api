@@ -13,7 +13,14 @@ const app = express();
 
 app.use(express.json());
 
-const verifyBody = (request) => {
+const verifyRequest = (body = {}, productId = undefined) => {
+  let product = {};
+  if (productId) {
+    product = products.find((product) => {
+      return product.id === productId;
+    });
+  }
+
   // on crée le schema du body de la requête attendu
   const schema = Joi.object({
     title: Joi.string(),
@@ -28,17 +35,17 @@ const verifyBody = (request) => {
   });
 
   // On vérifie la requête
-  const { error } = schema.validate(request, { abortEarly: false });
-  console.log(error);
+  const { error } = schema.validate(body, { abortEarly: false });
+
   // si le schema de la requête reçue ne correspond pas à celle attendu
+  let err = [];
   if (error) {
-    let err = [];
     error.details.forEach((el) => {
       err.push(el.message);
     });
-
-    return err.toString();
   }
+
+  return { product: product, error: err };
 };
 
 app.get("", (req, res) => {
@@ -54,11 +61,7 @@ app.get("/api/products", (req, res) => {
 app.get("/api/products/:id", (req, res) => {
   const id = parseInt(req.params.id); // on récupère l'id situé dans l'url
 
-  // on vérifie si l'id correspond à un produit
-  const product = products.find((product) => {
-    return product.id === id;
-  });
-
+  const { product } = verifyRequest({}, id);
   if (!product) {
     return res.status(404).send(`This id "${id}" was not found`);
   }
@@ -70,11 +73,10 @@ app.post("/api/products", (req, res) => {
   const product = req.body;
 
   // on vérifie si le body de la requête est correct
-  const err = verifyBody(product);
-  if (err) {
-    return res.status(400).send(err.toString());
+  const { error } = verifyRequest(product);
+  if (error.length !== 0) {
+    return res.status(400).send(error.toString());
   }
-
   product.id = products[products.length - 1].id + 1;
 
   products.push(product);
@@ -85,10 +87,7 @@ app.post("/api/products", (req, res) => {
 app.delete("/api/products/:id", (req, res) => {
   const id = parseInt(req.params.id);
 
-  const product = products.find((product) => {
-    return product.id === id;
-  });
-
+  const { product } = verifyRequest({}, id);
   if (!product) {
     return res.status(404).send(`This id "${id}" was not found`);
   }
@@ -107,17 +106,12 @@ app.put("/api/products/:id", (req, res) => {
   const id = parseInt(req.params.id);
   const propToModify = req.body;
 
-  const product = products.find((product) => {
-    return product.id === id;
-  });
-
+  const { error, product } = verifyRequest(propToModify, id);
   if (!product) {
     return res.status(404).send(`This id "${id}" was not found`);
   }
-
-  const err = verifyBody(propToModify);
-  if (err) {
-    return res.status(400).send(err.toString());
+  if (error.length !== 0) {
+    return res.status(400).send(error.toString());
   }
 
   // sinon on modifie le produit
