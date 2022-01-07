@@ -123,5 +123,5 @@ app.put("/api/products/:id", (req, res) => {
 });
 
 app.listen(process.env.PORT || 3000, () =>
-  console.log("Listenning on port 3000...")
+  console.log("Listenning on port http://localhost:3000/")
 );
